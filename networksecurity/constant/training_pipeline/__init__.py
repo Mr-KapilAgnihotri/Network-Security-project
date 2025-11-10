@@ -9,7 +9,7 @@ PIPELINE_NAME: str = "NetworkSecurity"
 ARTIFACT_DIR: str = "Artifacts"
 FILE_NAME: str = "phishingData.csv"
 
-TRAIN_FILE_NAME: str = "traom.csv"
+TRAIN_FILE_NAME: str = "train.csv"
 TEST_FILE_NAME: str = "test.csv"
 
 #Data Ingestion realted constant start with DATA_INGESTION VAR NAME
