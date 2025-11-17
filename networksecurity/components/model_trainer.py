@@ -16,6 +16,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import r2_score
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
+import mlflow # pyright: ignore[reportMissingImports]
 from sklearn.ensemble import(
     AdaBoostClassifier,
     GradientBoostingClassifier,
@@ -32,6 +33,17 @@ class ModelTrainer:
             self.data_transformation_artifact=data_transformation_artifact
         except Exception as e:
             raise NetworkSecurityException(e,sys)
+        
+    def track_mlflow(self,best_model,classificationmetric):
+        with mlflow.start_run():
+            f1_score=classificationmetric.f1_score
+            precision_score=classificationmetric.precision_score
+            recall_score=classificationmetric.recall_score
+            
+            mlflow.log_metric("f1_score",f1_score)
+            mlflow.log_metric("precision",precision_score)
+            mlflow.log_metric("recall_score",recall_score)
+            mlflow.sklearn.log_model(best_model,"model")
         
     def train_model(self,x_train,y_train,x_test,y_test):
         models={
@@ -50,12 +62,12 @@ class ModelTrainer:
             "Random Forest":{
                 #'criterion':['gini','entropy','log_loss'],
                 #'max_features':['sqrt','log2','None']
-                'n_estimators': [8,16,32,64,128,256]
+                'n_estimators': [8,16,32,128,256]
             },
             "Gradient Boosting":{
                 #'loss':['log_loss','exponential'],
-                'learning_rate':[.1,.01,.05,.001],
-                'subsample':[0.6,0.7,0.75,0.8,0.85,0.9],
+                'learning_rate':[.1,.01,.001],
+                'subsample':[0.6,0.7,0.75,0.85,0.9],
                 'n_estimators': [8,16,32,64,128,256]
             },
             "Logistic Regression":{},
@@ -80,9 +92,14 @@ class ModelTrainer:
         classification_train_metric= get_classification_score(y_true=y_train,y_pred=y_train_pred)
         
         ##Function to track mlflow
+        self.track_mlflow(best_model,classification_train_metric)
+        
+        
         
         y_test_pred=best_model.predict(x_test)
         classification_test_metric= get_classification_score(y_true=y_test,y_pred=y_test_pred)
+        ##Function to track mlflow
+        self.track_mlflow(best_model,classification_test_metric)
         
         preprocessor=load_object(file_path=self.data_transformation_artifact.transformed_object_file_path)
         model_dir_path= os.path.dirname(self.model_trainer_config.trained_model_file_path)
