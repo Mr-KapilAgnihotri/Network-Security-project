@@ -24,6 +24,10 @@ from sklearn.ensemble import(
 )
 
 
+# import dagshub
+# dagshub.init(repo_owner='Mr-KapilAgnihotri', repo_name='Network-Security-project', mlflow=True)
+
+
 
 
 class ModelTrainer:
@@ -92,14 +96,14 @@ class ModelTrainer:
         classification_train_metric= get_classification_score(y_true=y_train,y_pred=y_train_pred)
         
         ##Function to track mlflow
-        self.track_mlflow(best_model,classification_train_metric)
+        # self.track_mlflow(best_model,classification_train_metric)
         
         
         
         y_test_pred=best_model.predict(x_test)
         classification_test_metric= get_classification_score(y_true=y_test,y_pred=y_test_pred)
         ##Function to track mlflow
-        self.track_mlflow(best_model,classification_test_metric)
+        # self.track_mlflow(best_model,classification_test_metric)
         
         preprocessor=load_object(file_path=self.data_transformation_artifact.transformed_object_file_path)
         model_dir_path= os.path.dirname(self.model_trainer_config.trained_model_file_path)
@@ -107,6 +111,12 @@ class ModelTrainer:
         
         Network_Model=NetworkModel(preprocessor=preprocessor,model=best_model)
         save_object(self.model_trainer_config.trained_model_file_path,obj=NetworkModel) 
+       
+        logging.info(f"Train Metric Check: {classification_train_metric}")
+        logging.info(f"Test Metric Check: {classification_test_metric}")
+        logging.info(f"Trained Model Path Check: {self.model_trainer_config.trained_model_file_path}")
+       
+        save_object("final_model/model.pkl",best_model)
        
        ##Model Trainer Artifact
         model_trainer_artifact=ModelTrainerArtifact(
@@ -135,7 +145,8 @@ class ModelTrainer:
                 test_arr[:, -1]
             )
             
-            model=self.train_model(x_train,y_train,x_test,y_test)
+            model_trainer_artifact=self.train_model(x_train,y_train,x_test,y_test)
+            return model_trainer_artifact
             
         except Exception as e:
             raise NetworkSecurityException(e,sys)   
